@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 from .my_settings import MY_SECRET_KEY
 from datetime import timedelta
 import os
@@ -141,6 +142,11 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
+    # 여기서부터 새로 추가 / 필요없을시 삭제
+    "DEFAULT_PERMISSION_CLASSES":["rest_framework.permissions.IsAuthenticated"
+    ],
+    "DEFAULT_PAGINATION_CLASS" : "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE" : 10
 }
 
 SIMPLE_JWT = {
