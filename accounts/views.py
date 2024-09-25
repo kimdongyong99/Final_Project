@@ -6,6 +6,8 @@ from .validators import validate_signup
 from .serializers import UserSerializer
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.exceptions import TokenError
 
 # Create your views here.
 class SignupView(APIView):
@@ -30,7 +32,7 @@ class SignupView(APIView):
         return Response(serializer.data)
 
 
-class SigninView(APIView):
+class LoginView(APIView):
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
@@ -46,3 +48,16 @@ class SigninView(APIView):
         res_data["access_token"] = str(refresh.access_token)
         res_data["refresh_token"] = str(refresh)
         return Response(res_data)
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        refresh_token_str = request.data.get("refresh_token")
+        try:
+            refresh_token = RefreshToken(refresh_token_str)
+        except TokenError as e:
+            return Response({"msg": str(e)}, status=400)
+        
+        refresh_token.blacklist()
+        return Response(status=200)
