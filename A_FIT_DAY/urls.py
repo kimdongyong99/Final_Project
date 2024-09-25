@@ -17,6 +17,8 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 urlpatterns = [
@@ -25,3 +27,7 @@ urlpatterns = [
     path("api/posts/", include("posts.urls")),
     path("api/articles/", include("articles.urls")),
 ]
+
+# 미디어 파일 제공 설정 추가
+if settings.DEBUG:  # DEBUG 모드일 때만 미디어 파일을 제공
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -3,11 +3,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import User
 from .validators import validate_signup
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserProfileSerializer
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework import status, generics
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+
 
 # Create your views here.
 # class SignupView(APIView):
@@ -93,3 +97,28 @@ class LogoutView(APIView):
         
         refresh_token.blacklist()
         return Response(status=200)
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+
+    def get(self, request, username):
+        # 사용자 이름으로 User 객체 조회
+        user = get_object_or_404(User, username=username)
+        serializer = UserProfileSerializer(user) 
+        return Response(serializer.data)  # 직렬화된 데이터 반환
+
+    def put(self, request, username):
+        # 사용자 이름으로 User 객체 조회
+        user = get_object_or_404(User, username=username)
+
+        # 현재 사용자와 요청한 사용자가 동일한지 확인
+        if user != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)  # 권한 없음 응답
+
+        serializer = UserProfileSerializer(user, data=request.data, partial=True)  # 데이터로 시리얼라이저 초기화
+        if serializer.is_valid():  # 유효성 검사
+            serializer.save()  # 시리얼라이저를 통해 프로필 정보 저장
+            return Response({'message': '프로필이 업데이트 되었습니다.'}, status=status.HTTP_200_OK)  # 성공 메시지 반환
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # 오류 반환
