@@ -11,6 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
+
 class UserProfileSerializer(serializers.ModelSerializer):
 
     # username = serializers.CharField(source='user.username', read_only=True)  # User 모델의 username, email 필드 가져오기
