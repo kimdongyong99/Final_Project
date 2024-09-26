@@ -20,6 +20,10 @@ class Post(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        ordering = ["-id"] # 저장할 때 역순으로 정렬해준다.
+
+
 
 class Comment(models.Model):
     author = models.ForeignKey(

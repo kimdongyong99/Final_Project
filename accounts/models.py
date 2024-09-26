@@ -13,7 +13,7 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-
+      
 class EmailVerification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # 인증번호와 유저 연결
     code = models.CharField(max_length=6)  # 6자리 인증번호
@@ -22,3 +22,12 @@ class EmailVerification(models.Model):
     # 인증번호가 유효한지 확인 (10분 유효)
     def is_valid(self):
         return self.created_at + timedelta(minutes=10) > timezone.now()
+
+
+class UserProfile(models.Model):
+    # User 모델과 1:1 관계 설정
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)  # 프로필 사진
+
+    def __str__(self):
+        return self.user.username  # 사용자 이름 반환
