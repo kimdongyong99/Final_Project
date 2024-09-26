@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-from .my_settings import MY_SECRET_KEY
+from .my_settings import MY_SECRET_KEY, MY_EMAIL_HOST_USER, MY_EMAIL_HOST_PASSWORD
 from datetime import timedelta
 import os
 
@@ -147,3 +147,12 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
+
+
+# 이메일 발송 설정 (발신용)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.zoho.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = MY_EMAIL_HOST_USER  # 서버에서 이메일을 보낼 때 사용하는 발신자 이메일
+EMAIL_HOST_PASSWORD = MY_EMAIL_HOST_PASSWORD  # 발신자 이메일의 비밀번호

@@ -1,13 +1,14 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import User
+from .models import User, EmailVerification
 from .validators import validate_signup
 from .serializers import UserSerializer
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.exceptions import TokenError
+from .utils import generate_verification_code, send_verification_email
 
 # Create your views here.
 # class SignupView(APIView):
@@ -93,3 +94,39 @@ class LogoutView(APIView):
         
         refresh_token.blacklist()
         return Response(status=200)
+
+
+class RequestEmailVerificationView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            return Response({"error": "해당 이메일로 등록된 유저가 없습니다."}, status=400)
+
+        # 인증번호 생성 및 이메일로 전송
+        code = generate_verification_code()
+        send_verification_email(user.email, code)
+
+        # 인증번호 저장
+        EmailVerification.objects.create(user=user, code=code)
+        return Response({"message": "인증번호가 이메일로 발송되었습니다."}, status=200)
+
+
+class VerifyEmailView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        code = request.data.get("code")
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            return Response({"error": "유저를 찾을 수 없습니다."}, status=400)
+
+        # 인증번호 검증
+        verification = EmailVerification.objects.filter(user=user, code=code).first()
+
+        if verification and verification.is_valid():
+            verification.delete()  # 인증 완료 후 인증번호 삭제
+            return Response({"message": "이메일 인증이 완료되었습니다."}, status=200)
+        else:
+            return Response({"error": "잘못된 인증번호이거나 유효시간이 지났습니다."}, status=400)
