@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "articles",
     "posts",
     "chatgpt",
+    "crawler",
 ]
 
 MIDDLEWARE = [
