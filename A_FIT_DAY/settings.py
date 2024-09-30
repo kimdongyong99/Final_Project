@@ -11,21 +11,27 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-from .my_settings import MY_SECRET_KEY, MY_EMAIL_HOST_USER, MY_EMAIL_HOST_PASSWORD
+from .my_settings import (
+    MY_SECRET_KEY,
+    MY_EMAIL_HOST_USER,
+    MY_EMAIL_HOST_PASSWORD,
+    OPENAI_API_KEY,
+)
 from datetime import timedelta
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = MY_SECRET_KEY
+OPENAI_API_KEY = OPENAI_API_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -50,6 +56,7 @@ INSTALLED_APPS = [
     "accounts",
     "articles",
     "posts",
+    "chatgpt",
 ]
 
 MIDDLEWARE = [
@@ -144,8 +151,10 @@ REST_FRAMEWORK = {
     # 여기서부터 새로 추가 / 필요없을시 삭제
     # "DEFAULT_PERMISSION_CLASSES":["rest_framework.permissions.IsAuthenticated"
     # ],
+
     "DEFAULT_PAGINATION_CLASS" : "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE" : 10
+
 }
 
 SIMPLE_JWT = {
@@ -155,8 +164,8 @@ SIMPLE_JWT = {
 
 
 # 이메일 발송 설정 (발신용)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.zoho.com'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.zoho.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = MY_EMAIL_HOST_USER  # 서버에서 이메일을 보낼 때 사용하는 발신자 이메일
