@@ -2,6 +2,13 @@ from django.db import models
 from django.conf import settings
 
 
+class Hashtag(models.Model):
+    content = models.CharField(max_length=30, unique=True)
+
+    def __str__(self):
+        return self.content
+
+
 class Post(models.Model):
     author = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
@@ -17,6 +24,7 @@ class Post(models.Model):
         settings.AUTH_USER_MODEL, related_name="like_post", blank=True
     )
     likes_count = models.PositiveIntegerField(default=0)
+    hashtags = models.ManyToManyField(Hashtag, blank=True, related_name='posts_hashtags')
 
     def __str__(self):
         return self.title

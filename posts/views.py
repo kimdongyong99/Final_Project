@@ -6,17 +6,20 @@ from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
-from .models import Post, Comment
+from .models import Post, Comment, Hashtag
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import(
 ListAPIView,
 ListCreateAPIView,
 UpdateAPIView,
-DestroyAPIView)
+DestroyAPIView,
+GenericAPIView
+)
 from .serializers import(
 PostSerializer,
 PostDetailSerializer,
 PostLikeSerializer,
+HashtagSerializer,
 CommentListSerializer,
 CommentCreateSerializer)
 
@@ -40,6 +43,7 @@ class PostListView(ListAPIView):
         title = request.data.get("title")
         content = request.data.get("content")
         image = request.data.get("image") # 22 ~ 24줄까지 데이터 추출
+        hashtags_data = request.data.get("hashtags","")
             # 예외처리
         if not title:
             return Response(
@@ -55,16 +59,50 @@ class PostListView(ListAPIView):
             title = title,
             content=content,
             image=image,
-            author=request.user,
+            author=request.user, # 해시태그는 manytomanyfield이므로 직접 지정 금지.(지정시 오류 발생)
         )
-        serializer = PostSerializer(product)
+    # 해시태그를 하나의 문자열로 처리
+        if hashtags_data:
+            hashtag_names = hashtags_data.split(',')  # 쉼표로 구분하여 해시태그 리스트 생성
+            for hashtag_name in hashtag_names:
+                hashtag_name = hashtag_name.strip()  # 공백 제거
+                if hashtag_name:  # 빈 문자열 체크
+                    # 해시태그 앞에 # 추가
+                    hashtag_name_with_hash = f'#{hashtag_name}'
+                    hashtag, created = Hashtag.objects.get_or_create(content=hashtag_name)  # 해시태그 생성 또는 조회
+                    product.hashtags.add(hashtag)
+            serializer = PostSerializer(product)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+# 
 #     # 글 조회
 #     # def get(self, request):
 #     #     products = Post.objects.all()
 #     #     serializer = PostSerializer(products, many=True)
 #     #     return Response(serializer.data)
     
+
+class PostHashtagView(ListCreateAPIView):
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()  # queryset을 정의
+
+    def get(self, request, hash_pk):
+        post = get_object_or_404(Post, pk=hash_pk)
+        serializer = self.get_serializer(post)
+        return Response(serializer.data)
+
+    def post(self, request, hash_pk):
+        post = get_object_or_404(Post, pk=hash_pk)
+        hashtags_data = request.data.get('hashtags', [])
+
+        for hashtag_name in hashtags_data:
+            hashtag, created = Hashtag.objects.get_or_create(name=hashtag_name)
+            post.hashtags.add(hashtag)
+
+        post.save()
+        return Response({"message": "해시태그 등록을 성공하였습니다."}, status=status.HTTP_201_CREATED)
+
 
 
 class PostDetailView(APIView):
@@ -78,7 +116,7 @@ class PostDetailView(APIView):
     def put(self, request, post_pk):
         products = get_object_or_404(Post, pk=post_pk)
     # 예외 처리
-        if products.author != request.user: # 작성자 본인이 아닌 상태
+        if products.author != request.user: # 예외처리 / 작성자 본인이 아닌 상태
             return Response(
                 data={"detail": "본인의 작성글만 수정할 수 있습니다."},
                 status=status.HTTP_403_FORBIDDEN, # 본인의 글이 아니므로 금지된 접근 처리
@@ -88,6 +126,7 @@ class PostDetailView(APIView):
         if serializer.is_valid():
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     
     def delete(self, request, pk):
         products = get_object_or_404(Post, pk=pk)
@@ -99,7 +138,6 @@ class PostDetailView(APIView):
             )
         products.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
 
 
 class PostLikeView(APIView):
@@ -120,16 +158,7 @@ class PostLikeView(APIView):
         else:
             post.likes.add(request.user)
             return Response("좋아요", status=status.HTTP_201_CREATED) # 좋아요를 누르지 않았다면 좋아요를 누른 상태가 된다.
-    # def post(self, request, post_pk):
-    #     post = Post.objects.get(pk=post_pk)
-    #     author = request.user
-
-    #     if author in post.like.all():
-    #         post.like.remove(author)
-    #         return Response({"message : 좋아요 취소"}, status=status.HTTP_204_NO_CONTENT)
-    #     post.like.add(author)
-    #     return Response({"message": "좋아요"}, status=status.HTTP_201_CREATED)
-
+        
 
 
 
