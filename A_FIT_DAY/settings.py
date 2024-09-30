@@ -36,9 +36,11 @@ OPENAI_API_KEY = OPENAI_API_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["3.38.95.210",
-                 "localhost",
-                 "127.0.0.1",]
+ALLOWED_HOSTS = [
+    "3.38.95.210",
+    "localhost",
+    "127.0.0.1",
+]
 
 
 # Application definition
@@ -139,6 +141,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "static"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -153,10 +156,8 @@ REST_FRAMEWORK = {
     # 여기서부터 새로 추가 / 필요없을시 삭제
     # "DEFAULT_PERMISSION_CLASSES":["rest_framework.permissions.IsAuthenticated"
     # ],
-
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
-
 }
 
 SIMPLE_JWT = {
