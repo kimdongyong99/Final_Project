@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 class HashtagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hashtag
-        fields = "__all__"
+        fields = ["hashtag"]
 
 
 class PostSerializer(serializers.ModelSerializer):

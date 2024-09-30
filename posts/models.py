@@ -3,10 +3,10 @@ from django.conf import settings
 
 
 class Hashtag(models.Model):
-    content = models.CharField(max_length=30, unique=True)
+    hashtag = models.CharField(max_length=30, unique=True)
 
     def __str__(self):
-        return self.content
+        return self.hashtag
 
 
 class Post(models.Model):
