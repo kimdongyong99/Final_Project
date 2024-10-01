@@ -12,7 +12,13 @@ from django.views import View
 from .models import Article
 from bs4 import BeautifulSoup
 import requests
+from openai import OpenAI
+from django.conf import settings
+import chromedriver_autoinstaller
 
+
+
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 class CrawlerHealthChosun(View):
     def get(self, request, *args, **kwargs):
@@ -57,7 +63,7 @@ class CrawlerHealthChosun(View):
                     Article.objects.create(
                         title=title, link=full_link, image_url=image_url)
 
-                # 반환할 정보에 제목, 링크, 이미지 추가
+                # 반환할 정보에 제목, 링크, 이미지, 요약 추가
                 if image_url:
                     article_info += f'<a href="{full_link}">{title}</a><br><img src="{image_url}" alt="{title}" style="width:300px;"><br><br>'
                 else:
@@ -70,84 +76,79 @@ class CrawlerHealthChosun(View):
         return article_info
 
 
-class CrawlerNewsList(View):
+class WebDriverManager:
+    def __enter__(self):
+        chrome_options = Options()
+        # chrome_options.add_argument("--headless")
+        # chrome_options.add_argument("--no-sandbox")
+        # chrome_options.add_argument("--disable-dev-shm-usage")
+        # chrome_options.add_argument("--remote-debugging-port=9222")
+        path = chromedriver_autoinstaller.install()
+        self.driver = webdriver.Chrome(
+            service=ChromeService(path),
+            options=chrome_options,
+        )
+        return self.driver
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.driver.quit()
+
+
+class ArticleSummarizer(View):
     def get(self, request, *args, **kwargs):
-        url = "https://sports.news.naver.com/wbaseball/index/"
-        response = requests.get(url, verify=True)
-        soup = BeautifulSoup(response.text, "html.parser")
+        url = request.GET.get("url")
 
-        news_info = self.extract_news(soup, "ul", "home_news_list")
-        news_info += self.extract_news(soup, "ul", "division")
+        if not url:
+            return JsonResponse({"error": "URL이 제공되지 않았습니다."}, status=400)
 
-        return HttpResponse(f"크롤링 시작:<br>{news_info}")
+        try:
+            with WebDriverManager() as driver:
+                driver.get(url)
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located(
+                        (By.CLASS_NAME, "NewsEndMain_comp_article_content__PZYoE")
+                    )
+                )
+                html_content = driver.page_source
+        except Exception as e:
+            return JsonResponse(
+                {"error": f"웹 크롤링 중 오류 발생: {str(e)}"}, status=500
+            )
 
-    def extract_news(self, soup, tag, class_name):
-        news_list = soup.find(tag, class_=class_name)
-        news_info = ""
-        if news_list:
-            for item in news_list.find_all("li"):
-                title_tag = item.find("a")
-                if title_tag:
-                    href = title_tag.get("href")
-                    title = title_tag.get("title", "No title")
-                    news_info += f'<a href="{href}">{title}</a><br>'
-        return news_info
+        soup = BeautifulSoup(html_content, "html.parser")
+        content = self.extract_main_content(soup)
 
+        if not content:
+            return JsonResponse({"error": "기사를 찾을 수 없습니다."}, status=404)
 
-# class WebDriverManager:
-#     def __enter__(self):
-#         chrome_options = Options()
-#         chrome_options.add_argument("--headless")
-#         chrome_options.add_argument("--no-sandbox")
-#         chrome_options.add_argument("--disable-dev-shm-usage")
+        try:
+            summary = self.summarize_content(content)
+        except Exception as e:
+            return JsonResponse(
+                {"error": f"요약 생성 중 오류 발생: {str(e)}"}, status=500
+            )
 
-#         self.driver = webdriver.Chrome(
-#             service=ChromeService(executable_path="/opt/homebrew/bin/chromedriver"),
-#             options=chrome_options,
-#         )
-#         return self.driver
+        return JsonResponse({"summary": summary})
 
-#     def __exit__(self, exc_type, exc_value, traceback):
-#         self.driver.quit()
+    def extract_main_content(self, soup):
+        article_div = soup.find(
+            "article", class_="NewsEndMain_comp_news_article__wMpnW _article_body"
+        )
+        if article_div:
+            content_div = article_div.find("div", class_="_article_content")
+            if content_div:
+                text = content_div.get_text(strip=True)
+                if len(text) > 200:
+                    return text
+        return None
 
-
-# class ArticleSummarizer(View):
-#     def get(self, request, *args, **kwargs):
-#         url = request.GET.get("url")
-
-#         if not url:
-#             return JsonResponse({"error": "URL이 제공되지 않았습니다."}, status=400)
-
-#         try:
-#             with WebDriverManager() as driver:
-#                 driver.get(url)
-#                 WebDriverWait(driver, 10).until(
-#                     EC.presence_of_element_located(
-#                         (By.CLASS_NAME, "NewsEndMain_comp_article_content__PZYoE")
-#                     )
-#                 )
-#                 html_content = driver.page_source
-#         except Exception as e:
-#             return JsonResponse(
-#                 {"error": f"웹 크롤링 중 오류 발생: {str(e)}"}, status=500
-#             )
-
-#         soup = BeautifulSoup(html_content, "html.parser")
-#         content = self.extract_main_content(soup)
-
-#         if not content:
-#             return JsonResponse({"error": "기사를 찾을 수 없습니다."}, status=404)
-
-#         return JsonResponse({"article_content": content})
-
-#     def extract_main_content(self, soup):
-#         article_div = soup.find(
-#             "article", class_="NewsEndMain_comp_news_article__wMpnW _article_body"
-#         )
-#         if article_div:
-#             content_div = article_div.find("div", class_="_article_content")
-#             if content_div:
-#                 text = content_div.get_text(strip=True)
-#                 if len(text) > 200:
-#                     return text
-#         return None
+    def summarize_content(self, content):
+        """추출한 기사를 요약하는 함수"""
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "이 기사를 간단히 요약해 주세요."},
+                {"role": "user", "content": content},
+            ],
+        )
+        return response.choices[0].message.content.strip()
