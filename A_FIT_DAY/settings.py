@@ -61,7 +61,6 @@ INSTALLED_APPS = [
     "articles",
     "posts",
     "chatgpt",
-    "crawler",
 ]
 
 MIDDLEWARE = [
@@ -79,7 +78,7 @@ ROOT_URLCONF = "A_FIT_DAY.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

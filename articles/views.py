@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
@@ -13,85 +10,118 @@ from .models import Article
 from bs4 import BeautifulSoup
 import requests
 from openai import OpenAI
+from django.urls import reverse
 from django.conf import settings
-import chromedriver_autoinstaller
-
-
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-class CrawlerHealthChosun(View):
+class CrawlerNewsList(View):
     def get(self, request, *args, **kwargs):
         # 헬스 조선 기사 리스트 페이지 URL
-        url = "https://health.chosun.com/list_life.html"
+        url = "https://health.chosun.com/list.html"
         response = requests.get(url, verify=True)
 
-        # 응답의 인코딩을 euc-kr로 설정, 인코딩 안하면 깨짐
+        # 응답의 인코딩을 euc-kr로 설정
         response.encoding = 'euc-kr'
-
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # 기사 제목, 링크, 이미지 URL 추출
-        article_info = self.extract_articles(soup)
+        # 기사 제목과 링크 추출
+        news_info = self.extract_news(soup)
 
         # HttpResponse로 크롤링된 기사 정보를 반환
-        return HttpResponse(f"크롤링 시작:<br>{article_info}")
+        return HttpResponse(f"크롤링 시작:<br>{news_info}")
 
-    def extract_articles(self, soup):
-        article_info = ""  # 반환할 정보를 저장할 변수
+    def extract_news(self, soup):
+        news_info = ""  # 반환할 정보를 저장할 변수
 
-        # 제목과 링크 추출
+        # 기사 리스트를 'li' 태그로 찾고 클래스 이름은 'rellist'
         article_list = soup.find_all('li', class_='rellist')
 
         for item in article_list:
-            title_tag = item.find("h4").find("a")
-            image_tag = item.find("img")  # 조선헬스에서 img 확인
-
+            title_tag = item.find("h4").find("a")  # 제목과 링크가 포함된 a 태그
+            image_tag = item.find("img")
             if title_tag:
                 href = title_tag.get("href")
                 title = title_tag.get_text(strip=True)
                 full_link = f"https://health.chosun.com{href}"
 
-                # 이미지 URL이 있을 경우 추출
                 if image_tag:
                     image_url = image_tag.get("src")
                 else:
                     image_url = None
 
-                # 중복 체크 후 DB에 저장
                 if not Article.objects.filter(link=full_link).exists():
                     Article.objects.create(
                         title=title, link=full_link, image_url=image_url)
-
                 # 반환할 정보에 제목, 링크, 이미지, 요약 추가
                 if image_url:
-                    article_info += f'<a href="{full_link}">{title}</a><br><img src="{image_url}" alt="{title}" style="width:300px;"><br><br>'
+                    news_info += f'<a href="{full_link}">{title}</a><br><img src="{image_url}" alt="{title}" style="width:300px;"><br><br>'
                 else:
-                    article_info += f'<a href="{full_link}">{title}</a><br><br>'
+                    news_info += f'<a href="{full_link}">{title}</a><br><br>'
 
         # 반환할 기사 정보가 없으면 기본 메시지 반환
-        if not article_info:
-            article_info = "No articles found."
+        if not news_info:
+            news_info = "No articles found."
 
-        return article_info
+        return news_info
 
 
 class WebDriverManager:
     def __enter__(self):
         chrome_options = Options()
-        # chrome_options.add_argument("--headless")
-        # chrome_options.add_argument("--no-sandbox")
-        # chrome_options.add_argument("--disable-dev-shm-usage")
-        # chrome_options.add_argument("--remote-debugging-port=9222")
-        path = chromedriver_autoinstaller.install()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+
         self.driver = webdriver.Chrome(
-            service=ChromeService(path),
+            service=ChromeService(executable_path="C:\\Users\\noaet\\chromedriver-win64\\chromedriver.exe"),
             options=chrome_options,
         )
         return self.driver
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.driver.quit()
+
+
+class CrawlerNewsSummary(View):
+    def get(self, request, *args, **kwargs):
+        # 헬스 조선 기사 리스트 페이지 URL
+        url = "https://health.chosun.com/list.html"
+        response = requests.get(url, verify=True)
+
+        # 응답의 인코딩을 euc-kr로 설정
+        response.encoding = 'euc-kr'
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # 기사 제목과 링크 추출
+        news_info = self.extract_news(soup)
+
+        return HttpResponse(
+            f"""
+            크롤링 시작:<br>
+            {news_info}
+        """
+        )
+
+    def extract_news(self, soup):
+        news_list = soup.find('ul', class_='tab-contents board-list')  # 헬스 조선의 뉴스 리스트 태그와 클래스명
+        news_info = ""
+        if news_list:
+            for item in news_list.find_all("li", class_="rellist"):
+                title_tag = item.find("h4").find("a")
+                if title_tag:
+                    href = title_tag.get("href")
+                    title = title_tag.get_text(strip=True)
+                    full_link = f"https://health.chosun.com{href}"  # 상대 경로를 절대 경로로 변환
+                    news_info += (
+                        f'<a href="{reverse("summarize")}?url={full_link}">{title}</a><br>'
+                    )
+        return news_info
 
 
 class ArticleSummarizer(View):
@@ -106,7 +136,7 @@ class ArticleSummarizer(View):
                 driver.get(url)
                 WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located(
-                        (By.CLASS_NAME, "NewsEndMain_comp_article_content__PZYoE")
+                        (By.CLASS_NAME, "news_body_all")
                     )
                 )
                 html_content = driver.page_source
@@ -131,15 +161,11 @@ class ArticleSummarizer(View):
         return JsonResponse({"summary": summary})
 
     def extract_main_content(self, soup):
-        article_div = soup.find(
-            "article", class_="NewsEndMain_comp_news_article__wMpnW _article_body"
-        )
+        article_div = soup.find("div", class_="news_body_all")
         if article_div:
-            content_div = article_div.find("div", class_="_article_content")
-            if content_div:
-                text = content_div.get_text(strip=True)
-                if len(text) > 200:
-                    return text
+            text = article_div.get_text(strip=True)
+            if len(text) > 200:
+                return text
         return None
 
     def summarize_content(self, content):
@@ -152,3 +178,32 @@ class ArticleSummarizer(View):
             ],
         )
         return response.choices[0].message.content.strip()
+    
+
+class ArticleDetailAPIView(View):
+    def get(self, request, pk, *args, **kwargs):
+        article = get_object_or_404(Article, pk=pk)
+
+        return JsonResponse({
+            "title": article.title,
+            "link": article.link,
+            "image_url": article.image_url,
+            "total_likes": article.total_likes(),
+        })
+
+
+class ArticleLikeView(APIView):
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+
+    def post(self, request, article_id, *args, **kwargs):
+        article = get_object_or_404(Article, pk=article_id)
+        user = request.user  # 현재 로그인한 사용자
+
+        if article.likes.filter(id=user.id).exists():
+            # 이미 좋아요를 누른 경우 -> 좋아요 취소
+            article.likes.remove(user)
+            return Response({"message": "Like removed", "total_likes": article.total_likes()}, status=status.HTTP_200_OK)
+        else:
+            # 좋아요를 아직 누르지 않은 경우 -> 좋아요 추가
+            article.likes.add(user)
+            return Response({"message": "Article liked", "total_likes": article.total_likes()}, status=status.HTTP_200_OK)
