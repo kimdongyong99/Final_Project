@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.db import migrations, models
+import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -14,7 +15,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Article",
+            name="Payment",
             fields=[
                 (
                     "id",
@@ -25,14 +26,13 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("title", models.CharField(max_length=300)),
-                ("link", models.URLField(max_length=500)),
-                ("image_url", models.URLField(blank=True, max_length=500, null=True)),
+                ("amount", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("timestamp", models.DateTimeField(auto_now_add=True)),
+                ("imp_uid", models.CharField(max_length=100)),
                 (
-                    "likes",
-                    models.ManyToManyField(
-                        blank=True,
-                        related_name="liked_articles",
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
