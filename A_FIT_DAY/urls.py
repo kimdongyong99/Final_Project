@@ -27,6 +27,7 @@ urlpatterns = [
     path("api/posts/", include("posts.urls")),
     path("api/articles/", include("articles.urls")),
     path("api/chat_gpt/", include("chatgpt.urls")),
+    path("api/payment/", include("payment.urls")),
 ]
 
 # 미디어 파일 제공 설정 추가
