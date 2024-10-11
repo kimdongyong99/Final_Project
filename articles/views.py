@@ -53,6 +53,7 @@ class CrawlerNewsList(View):
 
                 image_url = image_tag.get("src") if image_tag else None
 
+
                 # 기존에 같은 링크가 있는지 확인하고 없으면 저장
                 article, created = Article.objects.get_or_create(
                     title=title,
@@ -67,6 +68,7 @@ class CrawlerNewsList(View):
                     "link": full_link,
                     "image_url": image_url
                 })
+
 
         return news_list
 

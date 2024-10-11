@@ -33,15 +33,27 @@ class SignupView(APIView):
         email = request.data.get("email")
         verification_code = request.data.get("verification_code")
 
-        verification = EmailVerification.objects.filter(email=email, code=verification_code).first()
+
+        verification = EmailVerification.objects.filter(
+            email=email, code=verification_code
+        ).first()
 
         if not verification or not verification.is_valid():
-            return Response({"error": "인증번호가 올바르지 않거나 만료되었습니다."}, status=400)
+            return Response(
+                {"error": "인증번호가 올바르지 않거나 만료되었습니다."}, status=400
+            )
+
 
         # 인증 성공 시 회원가입 처리
         username = request.data.get("username")
         profile_image = request.FILES.get("profile_image")
         address = request.data.get("address")
+        detail_address = request.data.get(
+            "detail_address"
+        )  # 혹은 request.data.get()을 사용
+
+
+
         print(f"Address received: {address}")
 
         user = User.objects.create_user(
@@ -49,10 +61,13 @@ class SignupView(APIView):
             password=password,
             email=email,
             profile_image=profile_image,
-            address=address
+
+            address=address,
+            detail_address=detail_address,
         )
 
-        verification.delete() # 회원가입 되면 인증번호 데이터 삭제
+        verification.delete()  # 회원가입 되면 인증번호 데이터 삭제
+
 
         # 유저 직렬화 및 응답
         serializer = UserSerializer(user)
@@ -68,7 +83,7 @@ class LoginView(APIView):
             return Response(
                 {"error": "아이디 혹은 비밀번호가 올바르지 않습니다."}, status=400
             )
-        
+
         serializer = UserSerializer(user)
         res_data = serializer.data
         refresh = RefreshToken.for_user(user)
@@ -79,13 +94,14 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
         refresh_token_str = request.data.get("refresh_token")
         try:
             refresh_token = RefreshToken(refresh_token_str)
         except TokenError as e:
             return Response({"msg": str(e)}, status=400)
-        
+
         refresh_token.blacklist()
         return Response(status=200)
 
@@ -125,7 +141,9 @@ class VerifyEmailView(APIView):
             verification.delete()  # 인증 완료 후 인증번호 삭제
             return Response({"message": "이메일 인증이 완료되었습니다."}, status=200)
         else:
-            return Response({"error": "잘못된 인증번호이거나 유효시간이 지났습니다."}, status=400)
+            return Response(
+                {"error": "잘못된 인증번호이거나 유효시간이 지났습니다."}, status=400
+            )
 
 
 class UserProfileView(APIView):
@@ -134,7 +152,7 @@ class UserProfileView(APIView):
     def get(self, request, username):
         # 사용자 이름으로 User 객체 조회
         user = get_object_or_404(User, username=username)
-        serializer = UserProfileSerializer(user) 
+        serializer = UserProfileSerializer(user)
         return Response(serializer.data)  # 직렬화된 데이터 반환
 
     def put(self, request, username):
@@ -145,9 +163,15 @@ class UserProfileView(APIView):
         if user != request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)  # 권한 없음 응답
 
-        serializer = UserProfileSerializer(user, data=request.data, partial=True)  # 데이터로 시리얼라이저 초기화
+        serializer = UserProfileSerializer(
+            user, data=request.data, partial=True
+        )  # 데이터로 시리얼라이저 초기화
         if serializer.is_valid():  # 유효성 검사
             serializer.save()  # 시리얼라이저를 통해 프로필 정보 저장
-            return Response({'message': '프로필이 업데이트 되었습니다.'}, status=status.HTTP_200_OK)  # 성공 메시지 반환
+            return Response(
+                {"message": "프로필이 업데이트 되었습니다."}, status=status.HTTP_200_OK
+            )  # 성공 메시지 반환
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # 오류 반환
+        return Response(
+            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        )  # 오류 반환
