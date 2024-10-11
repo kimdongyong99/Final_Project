@@ -9,13 +9,14 @@ from django.utils import timezone
 class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
-    
+    address = models.CharField(max_length=255, null=True, blank=True)
+
     def __str__(self):
         return self.username
 
       
 class EmailVerification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # 인증번호와 유저 연결
+    email = models.EmailField()  # 입력된 이메일을 저장
     code = models.CharField(max_length=6)  # 6자리 인증번호
     created_at = models.DateTimeField(auto_now_add=True)  # 생성 시간 자동 저장
 

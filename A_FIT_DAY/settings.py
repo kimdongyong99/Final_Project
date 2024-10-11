@@ -16,6 +16,8 @@ from .my_settings import (
     MY_EMAIL_HOST_USER,
     MY_EMAIL_HOST_PASSWORD,
     OPENAI_API_KEY,
+    MY_IMP_KEY,
+    MY_IMP_SECRET,
 )
 from datetime import timedelta
 import os
@@ -32,6 +34,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = MY_SECRET_KEY
 OPENAI_API_KEY = OPENAI_API_KEY
+
+# iamport api key, secret key
+IAMPORT = {
+    'IMP_KEY': MY_IMP_KEY,
+    'IMP_SECRET': MY_IMP_SECRET,
+}
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -56,14 +64,17 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "django_seed",
+    "corsheaders",
     # local-apps
     "accounts",
     "articles",
     "posts",
     "chatgpt",
+    "payment",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -72,6 +83,14 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+CORS_ORIGIN_WHITELIST = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'http://127.0.0.1:3000',  # 3000 포트 추가
+    'http://localhost:3000',  # 3000 포트 추가
+]
+# CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = "A_FIT_DAY.urls"
 
@@ -141,7 +160,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "static"
+# STATIC_ROOT = BASE_DIR / "static"
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

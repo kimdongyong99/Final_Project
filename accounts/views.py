@@ -12,6 +12,7 @@ from .utils import generate_verification_code, send_verification_email
 from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.core.validators import validate_email
 
 
 class SignupView(APIView):
@@ -28,18 +29,30 @@ class SignupView(APIView):
         if password != password_confirm:
             return Response({"error": "비밀번호가 일치하지 않습니다."}, status=400)
 
-        # 회원 정보 입력받기
-        username = request.data.get("username")
+        # 이메일 인증번호 확인
         email = request.data.get("email")
-        profile_image = request.FILES.get("profile_image")
+        verification_code = request.data.get("verification_code")
 
-        # 유저 생성
+        verification = EmailVerification.objects.filter(email=email, code=verification_code).first()
+
+        if not verification or not verification.is_valid():
+            return Response({"error": "인증번호가 올바르지 않거나 만료되었습니다."}, status=400)
+
+        # 인증 성공 시 회원가입 처리
+        username = request.data.get("username")
+        profile_image = request.FILES.get("profile_image")
+        address = request.data.get("address")
+        print(f"Address received: {address}")
+
         user = User.objects.create_user(
             username=username,
             password=password,
             email=email,
-            profile_image=profile_image
+            profile_image=profile_image,
+            address=address
         )
+
+        verification.delete() # 회원가입 되면 인증번호 데이터 삭제
 
         # 유저 직렬화 및 응답
         serializer = UserSerializer(user)
@@ -80,17 +93,19 @@ class LogoutView(APIView):
 class RequestEmailVerificationView(APIView):
     def post(self, request):
         email = request.data.get("email")
-        user = User.objects.filter(email=email).first()
 
-        if not user:
-            return Response({"error": "해당 이메일로 등록된 유저가 없습니다."}, status=400)
+        # 이메일 형식이 올바른지 확인
+        try:
+            validate_email(email)
+        except:
+            return Response({"error": "올바른 이메일 형식이 아닙니다."}, status=400)
 
-        # 인증번호 생성 및 이메일로 전송
+        # 인증번호 생성 및 이메일 전송
         code = generate_verification_code()
-        send_verification_email(user.email, code)
+        send_verification_email(email, code)
 
-        # 인증번호 저장
-        EmailVerification.objects.create(user=user, code=code)
+        # 인증번호와 이메일을 저장 (여기서는 email을 그대로 저장)
+        EmailVerification.objects.create(email=email, code=code)
         return Response({"message": "인증번호가 이메일로 발송되었습니다."}, status=200)
 
 
