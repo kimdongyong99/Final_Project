@@ -20,6 +20,8 @@ from rest_framework.permissions import IsAuthenticated
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
+from django.http import JsonResponse
+
 class CrawlerNewsList(View):
     def get(self, request, *args, **kwargs):
         # 헬스 조선 기사 리스트 페이지 URL
@@ -31,44 +33,33 @@ class CrawlerNewsList(View):
         soup = BeautifulSoup(response.text, "html.parser")
 
         # 기사 제목과 링크 추출
-        news_info = self.extract_news(soup)
+        news_data = self.extract_news(soup)
 
-        # HttpResponse로 크롤링된 기사 정보를 반환
-        return HttpResponse(f"크롤링 시작:<br>{news_info}")
+        # JSON 형식으로 반환
+        return JsonResponse(news_data, safe=False)
 
     def extract_news(self, soup):
-        news_info = ""  # 반환할 정보를 저장할 변수
-
-        # 기사 리스트를 'li' 태그로 찾고 클래스 이름은 'rellist'
+        news_list = []
         article_list = soup.find_all('li', class_='rellist')
 
         for item in article_list:
-            title_tag = item.find("h4").find("a")  # 제목과 링크가 포함된 a 태그
+            title_tag = item.find("h4").find("a")
             image_tag = item.find("img")
             if title_tag:
                 href = title_tag.get("href")
                 title = title_tag.get_text(strip=True)
                 full_link = f"https://health.chosun.com{href}"
 
-                if image_tag:
-                    image_url = image_tag.get("src")
-                else:
-                    image_url = None
+                image_url = image_tag.get("src") if image_tag else None
 
-                if not Article.objects.filter(link=full_link).exists():
-                    Article.objects.create(
-                        title=title, link=full_link, image_url=image_url)
-                # 반환할 정보에 제목, 링크, 이미지, 요약 추가
-                if image_url:
-                    news_info += f'<a href="{full_link}">{title}</a><br><img src="{image_url}" alt="{title}" style="width:300px;"><br><br>'
-                else:
-                    news_info += f'<a href="{full_link}">{title}</a><br><br>'
+                # JSON 형식으로 뉴스 데이터 저장
+                news_list.append({
+                    "title": title,
+                    "link": full_link,
+                    "image_url": image_url
+                })
 
-        # 반환할 기사 정보가 없으면 기본 메시지 반환
-        if not news_info:
-            news_info = "No articles found."
-
-        return news_info
+        return news_list
 
 
 class WebDriverManager:

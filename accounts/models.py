@@ -8,14 +8,18 @@ from django.utils import timezone
 
 class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
-    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
-    
+    profile_image = models.ImageField(
+        upload_to="profile_images/", null=True, blank=True
+    )
+    address = models.CharField(max_length=255, null=True, blank=True)
+    detail_address = models.CharField(max_length=255, null=True, blank=True)
+
     def __str__(self):
         return self.username
 
-      
+
 class EmailVerification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # 인증번호와 유저 연결
+    email = models.EmailField()  # 입력된 이메일을 저장
     code = models.CharField(max_length=6)  # 6자리 인증번호
     created_at = models.DateTimeField(auto_now_add=True)  # 생성 시간 자동 저장
 
@@ -27,7 +31,9 @@ class EmailVerification(models.Model):
 class UserProfile(models.Model):
     # User 모델과 1:1 관계 설정
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)  # 프로필 사진
+    profile_image = models.ImageField(
+        upload_to="profile_images/", null=True, blank=True
+    )  # 프로필 사진
 
     def __str__(self):
         return self.user.username  # 사용자 이름 반환
