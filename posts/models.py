@@ -24,14 +24,15 @@ class Post(models.Model):
         settings.AUTH_USER_MODEL, related_name="like_post", blank=True
     )
     likes_count = models.PositiveIntegerField(default=0)
-    hashtags = models.ManyToManyField(Hashtag, blank=True, related_name='posts_hashtags')
+    hashtags = models.ManyToManyField(
+        Hashtag, blank=True, related_name="posts_hashtags"
+    )
 
     def __str__(self):
         return self.title
 
     class Meta:
-        ordering = ["-id"] # 저장할 때 역순으로 정렬해준다.
-
+        ordering = ["-id"]  # 저장할 때 역순으로 정렬해준다.
 
 
 class Comment(models.Model):
