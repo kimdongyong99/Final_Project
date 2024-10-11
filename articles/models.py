@@ -15,5 +15,3 @@ class Article(models.Model):
     def total_likes(self):
         return self.likes.count()
     
-
-######ZZZZZZZZZZZZZZZZZzz
