@@ -22,6 +22,7 @@ client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 from django.http import JsonResponse
 
+
 class CrawlerNewsList(View):
     def get(self, request, *args, **kwargs):
         # 헬스 조선 기사 리스트 페이지 URL
@@ -37,7 +38,7 @@ class CrawlerNewsList(View):
 
         # JSON 형식으로 반환
         return JsonResponse(news_data, safe=False)
-
+    
     def extract_news(self, soup):
         news_list = []
         article_list = soup.find_all('li', class_='rellist')
@@ -52,12 +53,22 @@ class CrawlerNewsList(View):
 
                 image_url = image_tag.get("src") if image_tag else None
 
-                # JSON 형식으로 뉴스 데이터 저장
+
+                # 기존에 같은 링크가 있는지 확인하고 없으면 저장
+                article, created = Article.objects.get_or_create(
+                    title=title,
+                    link=full_link,
+                    image_url=image_url
+                )
+
+                # JSON 형식으로 뉴스 데이터 저장 (article.id 추가)
                 news_list.append({
+                    "id": article.id,  # 이 부분에서 id를 반환
                     "title": title,
                     "link": full_link,
                     "image_url": image_url
                 })
+
 
         return news_list
 
@@ -74,7 +85,7 @@ class WebDriverManager:
             options=chrome_options,
         )
         return self.driver
-
+    
     def __exit__(self, exc_type, exc_value, traceback):
         self.driver.quit()
 
@@ -98,7 +109,7 @@ class CrawlerNewsSummary(View):
             {news_info}
         """
         )
-
+    
     def extract_news(self, soup):
         news_list = soup.find('ul', class_='tab-contents board-list')  # 헬스 조선의 뉴스 리스트 태그와 클래스명
         news_info = ""
@@ -113,7 +124,7 @@ class CrawlerNewsSummary(View):
                         f'<a href="{reverse("summarize")}?url={full_link}">{title}</a><br>'
                     )
         return news_info
-
+    
 
 class ArticleSummarizer(View):
     def get(self, request, *args, **kwargs):
@@ -121,7 +132,7 @@ class ArticleSummarizer(View):
 
         if not url:
             return JsonResponse({"error": "URL이 제공되지 않았습니다."}, status=400)
-
+        
         try:
             with WebDriverManager() as driver:
                 driver.get(url)
@@ -135,22 +146,22 @@ class ArticleSummarizer(View):
             return JsonResponse(
                 {"error": f"웹 크롤링 중 오류 발생: {str(e)}"}, status=500
             )
-
+        
         soup = BeautifulSoup(html_content, "html.parser")
         content = self.extract_main_content(soup)
 
         if not content:
             return JsonResponse({"error": "기사를 찾을 수 없습니다."}, status=404)
-
+        
         try:
             summary = self.summarize_content(content)
         except Exception as e:
             return JsonResponse(
                 {"error": f"요약 생성 중 오류 발생: {str(e)}"}, status=500
             )
-
+        
         return JsonResponse({"summary": summary})
-
+    
     def extract_main_content(self, soup):
         article_div = soup.find("div", class_="news_body_all")
         if article_div:
@@ -158,7 +169,7 @@ class ArticleSummarizer(View):
             if len(text) > 200:
                 return text
         return None
-
+    
     def summarize_content(self, content):
         """추출한 기사를 요약하는 함수"""
         response = client.chat.completions.create(
@@ -175,12 +186,33 @@ class ArticleDetailAPIView(View):
     def get(self, request, pk, *args, **kwargs):
         article = get_object_or_404(Article, pk=pk)
 
+        # 요약이 DB에 없을 경우 OpenAI로 요약 생성
+        if not article.summary:
+            article.summary = self.get_summary(article)
+            article.save()  # 새 요약을 DB에 저장
+
         return JsonResponse({
             "title": article.title,
             "link": article.link,
             "image_url": article.image_url,
+            "summary": article.summary,  # 저장된 요약을 반환
             "total_likes": article.total_likes(),
         })
+
+    def get_summary(self, article):
+        content = article.title  # 기사의 제목을 요약에 사용
+        try:
+            summary = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "이 기사를 간단히 요약해 주세요."},
+                    {"role": "user", "content": content},
+                ],
+            ).choices[0].message.content.strip()
+        except Exception as e:
+            summary = "요약 생성 중 오류 발생"
+        
+        return summary
 
 
 class ArticleLikeView(APIView):
@@ -198,3 +230,4 @@ class ArticleLikeView(APIView):
             # 좋아요를 아직 누르지 않은 경우 -> 좋아요 추가
             article.likes.add(user)
             return Response({"message": "Article liked", "total_likes": article.total_likes()}, status=status.HTTP_200_OK)
+        
