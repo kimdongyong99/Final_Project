@@ -151,9 +151,11 @@ class UserProfileView(APIView):
 
     def get(self, request, username):
         # 사용자 이름으로 User 객체 조회
-        user = get_object_or_404(User, username=username)
-        serializer = UserProfileSerializer(user)
-        return Response(serializer.data)  # 직렬화된 데이터 반환
+        if request.user.username==username:
+            user = get_object_or_404(User, username=username)
+            serializer = UserProfileSerializer(user)
+            return Response(serializer.data)  # 직렬화된 데이터 반환
+        return Response({"error":"본인외에는 프로필을 조회할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
     def put(self, request, username):
         # 사용자 이름으로 User 객체 조회
