@@ -30,7 +30,7 @@ from .serializers import (
 
 class PostListView(ListAPIView):
     # List APIView에 이미 get이 들어가 있어서 밑에 get을 쓰지 않고도 Post.objects.all만 주고도 전체 조회가 가능함.
-    # permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     pagenation_class = PageNumberPagination  # pagination 작업.
     serializer_class = PostSerializer
 
