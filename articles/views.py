@@ -6,7 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from django.http import JsonResponse, HttpResponse
 from django.views import View
-from .models import Article
+from .models import Article, Comment
 from bs4 import BeautifulSoup
 import requests
 from openai import OpenAI
@@ -17,6 +17,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from .serializers import CommentListSerializer, CommentCreateSerializer
+from rest_framework.generics import ListCreateAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -36,6 +39,11 @@ class CrawlerNewsList(View):
         # 기사 제목과 링크 추출
         news_data = self.extract_news(soup)
 
+        # 추가: 각 뉴스 데이터에 대해 ArticleSerializer로 직렬화된 정보를 가져옴
+        for news_item in news_data:
+            article = Article.objects.get(id=news_item["id"])
+            news_item["total_likes"] = article.total_likes()
+
         # JSON 형식으로 반환
         return JsonResponse(news_data, safe=False)
     
@@ -53,7 +61,6 @@ class CrawlerNewsList(View):
 
                 image_url = image_tag.get("src") if image_tag else None
 
-
                 # 기존에 같은 링크가 있는지 확인하고 없으면 저장
                 article, created = Article.objects.get_or_create(
                     title=title,
@@ -66,9 +73,9 @@ class CrawlerNewsList(View):
                     "id": article.id,  # 이 부분에서 id를 반환
                     "title": title,
                     "link": full_link,
-                    "image_url": image_url
+                    "image_url": image_url,
+                    # 'total_likes'는 나중에 추가됨
                 })
-
 
         return news_list
 
@@ -230,4 +237,28 @@ class ArticleLikeView(APIView):
             # 좋아요를 아직 누르지 않은 경우 -> 좋아요 추가
             article.likes.add(user)
             return Response({"message": "Article liked", "total_likes": article.total_likes()}, status=status.HTTP_200_OK)
-        
+
+
+class CommentListCreateView(ListCreateAPIView):
+    serializer_class = CommentListSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        article_id = self.kwargs['article_pk']  # URL에서 article_pk 가져오기
+        return Comment.objects.filter(article_id=article_id)  # 해당 article의 댓글만 반환
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CommentCreateSerializer
+        return CommentListSerializer
+
+    def perform_create(self, serializer):
+        article = get_object_or_404(Article, pk=self.kwargs['article_pk'])
+        serializer.save(author=self.request.user, article=article)  # 댓글 작성
+
+
+class CommentUpdateDeleteView(UpdateAPIView, DestroyAPIView):
+    queryset = Comment.objects.all()
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    serializer_class = CommentCreateSerializer
+    lookup_field = 'pk'
