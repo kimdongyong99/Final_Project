@@ -93,8 +93,8 @@ class PostListView(ListAPIView):
                         hashtag=hashtag_name_with_hash
                     )  # 해시태그 생성 또는 조회
                     product.hashtags.add(hashtag)
-            serializer = PostSerializer(product)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response({"id": product.id}, status=status.HTTP_201_CREATED)
 
 
 class PostHashtagView(ListCreateAPIView):
@@ -177,8 +177,9 @@ class PostDetailView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk):
-        products = get_object_or_404(Post, pk=pk)
+    # 글 삭제
+    def delete(self, request, post_pk):
+        products = get_object_or_404(Post, pk=post_pk)
         # 다른 사람이 삭제하면 안되니까 예외처리
         if products.author != request.user:
             return Response(
@@ -190,43 +191,49 @@ class PostDetailView(APIView):
 
 
 class PostLikeView(APIView):
-    # permission_classes = [IsAuthenticatedOrReadOnly]
-
-    # 좋아요만 조회
-    def get(self, request, post_pk):
-        post = get_object_or_404(Post, pk=post_pk)
-        serializer = PostLikeSerializer(post)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     # 좋아요 기능
     def post(self, request, post_pk):
         post = get_object_or_404(Post, pk=post_pk)  # post_pk값을 가져옴
-        if (
-            request.user in post.likes.all()
-        ):  # 좋아요 한 유저를 조회해서 이미 좋아요를 누른 유저가 누를 경우
-            post.likes.remove(request.user)
-            return Response("좋아요 취소", status=status.HTTP_204_NO_CONTENT)
+        user = request.user
+        if user in post.likes.all():  # 좋아요 한 유저를 조회해서 이미 좋아요를 누른 유저가 누를 경우
+            post.likes.remove(user)
+            post.likes_count -= 1
+            post.save()
+            return Response({
+                "message": "좋아요 취소",
+                "likes_count": post.likes.count()  # 실시간으로 좋아요 수 반환
+            }, status=status.HTTP_200_OK)
         else:
-            post.likes.add(request.user)
-            return Response(
-                "좋아요", status=status.HTTP_201_CREATED
-            )  # 좋아요를 누르지 않았다면 좋아요를 누른 상태가 된다.
+            post.likes.add(user)
+            post.likes_count += 1
+            post.save()
+            return Response({
+                "message": "좋아요",
+                "likes_count": post.likes.count()  # 실시간으로 좋아요 수 반환
+            }, status=status.HTTP_200_OK)
 
 
 class CommentLIstCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
-    pagenation_class = PageNumberPagination
-
+    pagination_class = PageNumberPagination
+    
     def get_queryset(self):
-        post_id = self.kwargs["post_pk"]  # URL에서 post_pk 가져오기
-        return Comment.objects.filter(
-            post_id=post_id
-        )  # 특정 포스트에 대한 댓글만 가져옴
+        post_id = self.kwargs["post_pk"]
+        return Comment.objects.filter(post_id=post_id)
 
     def get_serializer_class(self):
         if self.request.method == "GET":
             return CommentListSerializer
         return CommentCreateSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({
+            'post_pk': self.kwargs['post_pk'],
+        })
+        return context
 
 
 class CommentUpdateDeleteView(UpdateAPIView, DestroyAPIView):
