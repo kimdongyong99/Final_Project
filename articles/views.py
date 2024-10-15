@@ -20,6 +20,7 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import CommentListSerializer, CommentCreateSerializer
 from rest_framework.generics import ListCreateAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from django.core.paginator import Paginator
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -36,6 +37,10 @@ class CrawlerNewsList(View):
         response.encoding = 'euc-kr'
         soup = BeautifulSoup(response.text, "html.parser")
 
+        # 검색어가 있으면 필터링
+        search = request.GET.get('search', '')
+        page_number = request.GET.get('page', 1)  # 요청된 페이지 번호, 기본값은 1
+
         # 기사 제목과 링크 추출
         news_data = self.extract_news(soup)
 
@@ -44,8 +49,22 @@ class CrawlerNewsList(View):
             article = Article.objects.get(id=news_item["id"])
             news_item["total_likes"] = article.total_likes()
 
-        # JSON 형식으로 반환
-        return JsonResponse(news_data, safe=False)
+        # 검색어가 있으면 필터링
+        if search:
+            news_data = [news_item for news_item in news_data if search.lower() in news_item['title'].lower()]
+
+        # 페이지네이션 적용 (한 페이지에 9개씩)
+        paginator = Paginator(news_data, 9)
+        page_obj = paginator.get_page(page_number)
+
+        # JSON 형식으로 반환 (페이지네이션 정보와 함께 반환)
+        return JsonResponse({
+            'news': list(page_obj),  # 뉴스 데이터 리스트
+            'has_next': page_obj.has_next(),  # 다음 페이지 여부
+            'has_previous': page_obj.has_previous(),  # 이전 페이지 여부
+            'page_number': page_obj.number,  # 현재 페이지 번호
+            'total_pages': paginator.num_pages,  # 전체 페이지 수
+        }, safe=False)
     
     def extract_news(self, soup):
         news_list = []
@@ -63,9 +82,11 @@ class CrawlerNewsList(View):
 
                 # 기존에 같은 링크가 있는지 확인하고 없으면 저장
                 article, created = Article.objects.get_or_create(
-                    title=title,
                     link=full_link,
-                    image_url=image_url
+                    defaults={
+                        'title': title,
+                        'image_url': image_url,
+                    }
                 )
 
                 # JSON 형식으로 뉴스 데이터 저장 (article.id 추가)
@@ -74,7 +95,6 @@ class CrawlerNewsList(View):
                     "title": title,
                     "link": full_link,
                     "image_url": image_url,
-                    # 'total_likes'는 나중에 추가됨
                 })
 
         return news_list
