@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Comment, Hashtag
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 
 
 class HashtagSerializer(serializers.ModelSerializer):
@@ -71,12 +72,28 @@ class PostLikeSerializer(serializers.ModelSerializer):
 
 
 class CommentListSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(source="author.username", read_only=True)  # username으로 직렬화
+
     class Meta:
         model = Comment
-        fields = ["author", "content", "created_at"]
+        fields = ["id", "author", "content", "created_at"]
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ["content"]
+        fields = ['content']
+
+    def create(self, validated_data):
+        request = self.context.get('request')  # Request 객체 가져오기
+        post_id = self.context.get('view').kwargs.get('post_pk')  # URL에서 post_id 가져오기
+        post = get_object_or_404(Post, pk=post_id)
+
+        # 댓글 생성 시 작성자와 게시글을 함께 저장
+        comment = Comment.objects.create(
+            content=validated_data['content'],
+            author=request.user,
+            post=post
+        )
+        return comment
+
