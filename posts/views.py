@@ -81,9 +81,7 @@ class PostListView(ListAPIView):
         )
         # 해시태그를 하나의 문자열로 처리
         if hashtags_data:
-            hashtag_names = hashtags_data.split(
-                ","
-            )  # 쉼표로 구분하여 해시태그 리스트 생성
+            hashtag_names = hashtags_data.split(",")  # 쉼표로 구분하여 해시태그 리스트 생성
             for hashtag_name in hashtag_names:
                 hashtag_name = hashtag_name.strip()  # 공백 제거
                 if hashtag_name:  # 빈 문자열 체크
