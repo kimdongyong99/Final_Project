@@ -178,7 +178,7 @@ class UserProfileView(APIView):
             return Response(
                 {"message": "프로필이 성공적으로 업데이트되었습니다."}, status=status.HTTP_200_OK
             )  # 성공 메시지 반환
-        print(123)
+
         return Response(
             serializer.errors, status=status.HTTP_400_BAD_REQUEST
         )  # 오류 반환
