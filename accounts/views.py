@@ -168,11 +168,9 @@ class UserProfileView(APIView):
 
         # 아이디와 이메일은 변경할 수 없도록 요청 데이터에서 제거
         data = request.data
-        data.pop('username', None)  # username 수정 방지
-        data.pop('email', None)  # email 수정 방지
         
         # 나머지 필드를 업데이트 (예: 비밀번호, 주소, 프로필 이미지 등)
-        serializer = UserSerializer(user, data=data, partial=True)  # partial=True는 부분 업데이트 허용
+        serializer = UserProfileSerializer(user, data=data, partial=True)  # partial=True는 부분 업데이트 허용
         if serializer.is_valid():  # 유효성 검사
             serializer.save()  # 시리얼라이저를 통해 프로필 정보 저장
             return Response(
