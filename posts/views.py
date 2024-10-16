@@ -44,12 +44,11 @@ class PostListView(ListAPIView):
         # 검색 기능(ListAPIView 상속시 사용가능)
         if search:
             return Post.objects.filter(
-                Q(title__icontains=search)
-                | Q(content__icontains=search)
-                | Q(
-                    hashtags__hashtag__icontains=search
-                )  # 필터링을 위해 Q 객체로 검색 조건 지정
-            )
+                Q(title__icontains=search) |
+                Q(content__icontains=search) |
+                Q(hashtags__hashtag__icontains=search) |
+                Q(author__username__icontains=search)
+            ).distinct()
         if order_by == "likes":
             queryset = queryset.order_by("-likes_count")
         else:  # 기본값은 최신순
@@ -137,7 +136,6 @@ class PostDetailView(APIView):
                 status=status.HTTP_403_FORBIDDEN,  # 본인의 글이 아니므로 금지된 접근 처리
             )
 
-        # 해시태그
         # 해시태그 데이터 처리
         hashtags_data = request.data.get("hashtags", "")
 
@@ -153,20 +151,20 @@ class PostDetailView(APIView):
         if hashtags_data:
             # hashtags_data가 리스트인지 문자열인지 확인
             if isinstance(hashtags_data, str):
-                hashtag_names = hashtags_data.split(
-                    ","
-                )  # 문자열인 경우 쉼표로 구분하여 리스트 생성
+                hashtag_names = hashtags_data.split(",")  # 문자열인 경우 쉼표로 구분하여 리스트 생성
             elif isinstance(hashtags_data, list):
                 hashtag_names = hashtags_data  # 리스트인 경우 그대로 사용
             else:
                 hashtag_names = []
+
             for hashtag_name in hashtag_names:
                 hashtag_name = hashtag_name.strip()  # 공백 제거
                 if hashtag_name:  # 빈 문자열 체크
-                    # 해시태그 앞에 # 추가
-                    hashtag_name_with_hash = f"#{hashtag_name}"
+                    # 해시태그 앞에 #이 없으면 추가
+                    if not hashtag_name.startswith("#"):
+                        hashtag_name = f"#{hashtag_name}"
                     hashtag, created = Hashtag.objects.get_or_create(
-                        hashtag=hashtag_name_with_hash
+                        hashtag=hashtag_name
                     )  # 해시태그 생성 또는 조회
                     post.hashtags.add(hashtag)
 
