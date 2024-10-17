@@ -173,6 +173,8 @@ class UserProfileView(APIView):
         serializer = UserProfileSerializer(user, data=data, partial=True)  # partial=True는 부분 업데이트 허용
         if serializer.is_valid():  # 유효성 검사
             serializer.save()  # 시리얼라이저를 통해 프로필 정보 저장
+            user.set_password(data.get("password"))
+            user.save()
             return Response(
                 {"message": "프로필이 성공적으로 업데이트되었습니다."}, status=status.HTTP_200_OK
             )  # 성공 메시지 반환
