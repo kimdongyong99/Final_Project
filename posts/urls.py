@@ -8,4 +8,6 @@ urlpatterns = [
     path("comment/<int:pk>", views.CommentUpdateDeleteView.as_view()),
     path("<int:post_pk>/like/", views.PostLikeView.as_view()),
     path("<int:hash_pk>/hash/", views.PostHashtagView.as_view()),
+    # 유저가 좋아요한 게시글 목록 가져오기
+    path("<str:username>/liked_posts/", views.LikedPostsView.as_view()),
 ]

@@ -10,6 +10,7 @@ from rest_framework.generics import ListCreateAPIView
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from .models import Post, Comment, Hashtag
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import (
     ListAPIView,
@@ -209,6 +210,19 @@ class PostLikeView(APIView):
                 "message": "좋아요",
                 "likes_count": post.likes.count()  # 실시간으로 좋아요 수 반환
             }, status=status.HTTP_200_OK)
+
+
+# 좋아요한 게시글 목록
+User = get_user_model()
+
+class LikedPostsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, username):
+        user = User.objects.get(username=username)
+        liked_posts = user.like_post.all()  # User 모델에서 역참조하여 좋아요한 게시글 가져오기
+        serializer = PostSerializer(liked_posts, many=True)
+        return Response({'results': serializer.data}, status=200)
 
 
 class CommentLIstCreateView(ListCreateAPIView):
