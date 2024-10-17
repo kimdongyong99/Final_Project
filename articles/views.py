@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from django.http import JsonResponse, HttpResponse
 from django.views import View
 from .models import Article, Comment
+from django.contrib.auth import get_user_model
 from bs4 import BeautifulSoup
 import requests
 from openai import OpenAI
@@ -17,7 +18,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from .serializers import CommentListSerializer, CommentCreateSerializer
+from .serializers import CommentListSerializer, CommentCreateSerializer, ArticleSerializer
 from rest_framework.generics import ListCreateAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.core.paginator import Paginator
@@ -258,6 +259,18 @@ class ArticleLikeView(APIView):
             article.likes.add(user)
             return Response({"message": "Article liked", "total_likes": article.total_likes()}, status=status.HTTP_200_OK)
 
+
+#좋아요한 기사글 목록
+User = get_user_model()
+
+class LikedArticlesView(APIView):
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+
+    def get(self, request, username, *args, **kwargs):
+        user = get_object_or_404(User, username=username)
+        liked_articles = user.liked_articles.all()  # User 모델에서 역참조하여 좋아요한 기사 가져오기
+        serializer = ArticleSerializer(liked_articles, many=True)
+        return Response({'results': serializer.data}, status=200)
 
 class CommentListCreateView(ListCreateAPIView):
     serializer_class = CommentListSerializer
