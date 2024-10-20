@@ -1,7 +1,8 @@
+# serializers.py
 from rest_framework import serializers
-from .models import Payment
+from .models import Product
 
-class PaymentSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Payment
-        fields = '__all__'
+        model = Product
+        fields = ['id', 'name', 'price', 'description', 'image', 'created_at']

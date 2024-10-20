@@ -89,6 +89,7 @@ class LoginView(APIView):
         refresh = RefreshToken.for_user(user)
         res_data["access_token"] = str(refresh.access_token)
         res_data["refresh_token"] = str(refresh)
+        res_data["id"] = user.id
         return Response(res_data)
 
 
@@ -149,44 +150,34 @@ class VerifyEmailView(APIView):
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
+    # 프로필 조회
     def get(self, request, username):
-        # 사용자 이름으로 User 객체 조회
-        user = get_object_or_404(User, username=username)
-        serializer = UserProfileSerializer(user)
-        return Response(serializer.data)  # 직렬화된 데이터 반환
+        if request.user.username == username:
+            user = get_object_or_404(User, username=username)
+            serializer = UserProfileSerializer(user)
+            return Response(serializer.data)  # 직렬화된 데이터 반환
+        return Response({"error": "본인 외에는 프로필을 조회할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
+    # 프로필 수정
     def put(self, request, username):
-        # 사용자 이름으로 User 객체 조회
         user = get_object_or_404(User, username=username)
-
+        
         # 현재 사용자와 요청한 사용자가 동일한지 확인
         if user != request.user:
-            return Response(status=status.HTTP_403_FORBIDDEN)  # 권한 없음 응답
+            return Response({"error": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)  # 권한 없음 응답
 
-        serializer = UserProfileSerializer(
-            user, data=request.data, partial=True
-        )  # 데이터로 시리얼라이저 초기화
+        # 아이디와 이메일은 변경할 수 없도록 요청 데이터에서 제거
+        data = request.data
+        
+        # 나머지 필드를 업데이트 (예: 비밀번호, 주소, 프로필 이미지 등)
+        serializer = UserProfileSerializer(user, data=data, partial=True)  # partial=True는 부분 업데이트 허용
         if serializer.is_valid():  # 유효성 검사
             serializer.save()  # 시리얼라이저를 통해 프로필 정보 저장
+            user.set_password(data.get("password"))
+            user.save()
             return Response(
-                {"message": "프로필이 업데이트 되었습니다."}, status=status.HTTP_200_OK
+                {"message": "프로필이 성공적으로 업데이트되었습니다."}, status=status.HTTP_200_OK
             )  # 성공 메시지 반환
 
         return Response(
             serializer.errors, status=status.HTTP_400_BAD_REQUEST
-        )  # 오류 반환
-
-
-@api_view(["GET"])
-def get_social_account_info(request):
-    if request.user.is_authenticated:
-        social_account = SocialAccount.objects.filter(user=request.user).first()
-        if social_account:
-            return Response(
-                {
-                    "provider": social_account.provider,
-                    "uid": social_account.uid,
-                    "email": social_account.extra_data.get("email", None),
-                }
-            )
-    return Response({"error": "No social account found"}, status=400)

@@ -1,62 +1,35 @@
-from django.shortcuts import render
-
-# Create your views here.
-from django.conf import settings
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
+# views.py
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+from .models import Product, Payment
+from .serializers import ProductSerializer
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from rest_framework import generics
-from .models import Payment
-from .serializers import PaymentSerializer
-import time
-import requests
+from rest_framework.response import Response
 
+class ProductListView(ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    pagination_class = None
 
-class PaymentList(generics.ListCreateAPIView):
-    queryset = Payment.objects.all()
-    serializer_class = PaymentSerializer
+# views.py
+class ProductDetailView(RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
 
+class PaymentCompleteView(APIView):
+    permission_classes = [IsAuthenticated]  # 로그인한 유저만 결제 가능
 
-class PaymentAPIView(APIView):
     def post(self, request):
-        amount = request.data.get('amount')
-        user = request.user
+        product_id = request.data.get('product_id')
+        product = Product.objects.get(id=product_id)
+        user = request.user  # 로그인된 유저 정보
 
-        # 아임포트 API 요청을 위한 인증 토큰 발급
-        auth_response = requests.post(
-            'https://api.iamport.kr/users/getToken',
-            data={
-                'imp_key': settings.IAMPORT['IMP_KEY'],
-                'imp_secret': settings.IAMPORT['IMP_SECRET'],
-            }
+        # 결제 정보 저장
+        payment = Payment.objects.create(
+            user=user,
+            product=product,
+            amount=product.price,  # 결제 금액
+            status='paid',  # 결제 상태 (성공)
         )
 
-        if auth_response.status_code != 200:
-            return Response({'message': '아임포트 인증 실패'}, status=400)
-
-        access_token = auth_response.json()['response']['access_token']
-
-        # 결제 요청
-        headers = {'Authorization': access_token}
-        payment_data = {
-            'merchant_uid': 'order_' + str(user.id) + str(time.time()),
-            'name': '결제',
-            'amount': amount,
-            'buyer_name': user.username,
-            'buyer_email': user.email,
-            'buyer_tel': user.profile.phone_number,
-        }
-
-        response = requests.post(
-            'https://api.iamport.kr/payments/onetime',
-            headers=headers,
-            data=payment_data
-        )
-
-        if response.status_code == 200 and response.json()['response']['status'] == 'paid':
-            imp_uid = response.json()['response']['imp_uid']
-            Payment.objects.create(user=user, amount=amount, imp_uid=imp_uid)
-            return Response({'message': '결제 성공'}, status=200)
-        else:
-            fail_reason = response.json().get('message', '결제 실패')
-            return Response({'message': '결제 실패', 'error': fail_reason}, status=400)
+        return Response({"message": "결제 정보가 성공적으로 저장되었습니다.", "payment_id": payment.id}, status=201)

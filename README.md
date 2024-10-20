@@ -24,29 +24,33 @@ AI 기반의 맞춤형 식단 및 운동 계획을 제공하는 다이어트 관
 | Backend | Python, Django |
 | Frontend | HTML, CSS, Bootstrap, JS |
 | Database | Django ORM, SQLite |
+| Open AI| GPT4.0 mini |
 
 # 🧑‍🧑‍🧒‍🧒 개발팀
 
 👑 김동용(팀장)
-- 댓글기능 구현
-- Chat GPT 구현
-- 백엔드 및 프론트엔드 구현
+- 댓글 관리 기능 개발
+- Chat GPT 연동 및 AI 채팅 상담 기능 개발
+- 지도 연동 기능 개발
+- 백엔드 및 프론트엔드 개발
+
+👑 이규호 (부팀장)
+- 사용자 인증 시스템을 구축 및 메일 인증을 통한 계정 활성화 기능 개발
+- 뉴스크롤링 기능 개발
+- 결제페이지 기능 개발
+- 백엔드 및 프론트엔드 개발
 
 👤 김나현
-- 프로필기능 구현
-- 소셜로그인 구현
-- 백엔드 및 프론트엔드 구현
-
-👤 이규호
-- 회원기능 및 이메일 인증 구현
-- 뉴스크롤링 구현
-- 결제페이지 구현
-- 백엔드 및 프론트엔드 구현
+- 회원정보수정 기능 개발
+- 프로필페이지 기능 개발
+- 백엔드 및 프론트엔드 개발
+- UX/UI 디자인
 
 👤 이예지
-- 게시글 기능구현
-- 결제페이지 구현
-- 백엔드 및 프론트엔드 구현
+- 게시물 관리 기능 개발
+- 키워드 태그 기능 개발
+- 백엔드 및 프론트엔드 개발
+- UX/UI 디자인
 
 # 🧬 디펙토리 구조
 | Structure| Function|
@@ -87,11 +91,16 @@ AI 기반의 맞춤형 식단 및 운동 계획을 제공하는 다이어트 관
 - 사용자는 AI 서비스를 이용해 원하는 정보를 검색할 수 있습니다.
 - 사용자는 AI 서비스를 이용해 원하는 정보의 결과를 받을 수 있습니다.
 
+## 5. Payment service
+-   
 
-# 📃 ERD 다이어그램
+
+# 📃 ERD Diagram
 ![image](https://github.com/user-attachments/assets/bd8106f2-eeb4-4802-8846-853dc68824ac)
 
 
 # 📃 와이어프레임
 ![image](https://github.com/user-attachments/assets/aa611206-2ea7-4b22-bdd2-ee221e6b42e9)
 
+# 📃 architecture
+![image](https://github.com/user-attachments/assets/c1fb952a-5268-451c-8ea6-e856d19567a5)
