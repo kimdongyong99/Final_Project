@@ -13,6 +13,12 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.core.validators import validate_email
+import requests
+from django.shortcuts import redirect
+import urllib.parse
+from allauth.socialaccount.models import SocialAccount
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 
 class SignupView(APIView):
@@ -33,7 +39,6 @@ class SignupView(APIView):
         email = request.data.get("email")
         verification_code = request.data.get("verification_code")
 
-
         verification = EmailVerification.objects.filter(
             email=email, code=verification_code
         ).first()
@@ -43,7 +48,6 @@ class SignupView(APIView):
                 {"error": "인증번호가 올바르지 않거나 만료되었습니다."}, status=400
             )
 
-
         # 인증 성공 시 회원가입 처리
         username = request.data.get("username")
         profile_image = request.FILES.get("profile_image")
@@ -52,8 +56,6 @@ class SignupView(APIView):
             "detail_address"
         )  # 혹은 request.data.get()을 사용
 
-
-
         print(f"Address received: {address}")
 
         user = User.objects.create_user(
@@ -61,13 +63,11 @@ class SignupView(APIView):
             password=password,
             email=email,
             profile_image=profile_image,
-
             address=address,
             detail_address=detail_address,
         )
 
         verification.delete()  # 회원가입 되면 인증번호 데이터 삭제
-
 
         # 유저 직렬화 및 응답
         serializer = UserSerializer(user)
@@ -181,4 +181,3 @@ class UserProfileView(APIView):
 
         return Response(
             serializer.errors, status=status.HTTP_400_BAD_REQUEST
-        )  # 오류 반환

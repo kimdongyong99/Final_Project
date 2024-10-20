@@ -37,8 +37,8 @@ OPENAI_API_KEY = OPENAI_API_KEY
 
 # iamport api key, secret key
 IAMPORT = {
-    'IMP_KEY': MY_IMP_KEY,
-    'IMP_SECRET': MY_IMP_SECRET,
+    "IMP_KEY": MY_IMP_KEY,
+    "IMP_SECRET": MY_IMP_SECRET,
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -71,6 +71,11 @@ INSTALLED_APPS = [
     "posts",
     "chatgpt",
     "payment",
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.kakao",
 ]
 
 MIDDLEWARE = [
@@ -82,22 +87,27 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 CORS_ORIGIN_WHITELIST = [
-    'http://127.0.0.1:8000',
-    'http://localhost:8000',
-    'http://127.0.0.1:3000',  # 3000 포트 추가
-    'http://localhost:3000',  # 3000 포트 추가
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",  # 3000 포트 추가
+    "http://localhost:3000",  # 3000 포트 추가
 ]
-# CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:3000",  # 프론트엔드 도메인
+]
 
 ROOT_URLCONF = "A_FIT_DAY.urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / 'templates'],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -149,20 +159,20 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
-# STATIC_ROOT = BASE_DIR / "static"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, "static"),
 ]
 
 # Default primary key field type
@@ -174,13 +184,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
     ],
     # 여기서부터 새로 추가 / 필요없을시 삭제
-    # "DEFAULT_PERMISSION_CLASSES":["rest_framework.permissions.IsAuthenticated"
-    # ],
-
-    "DEFAULT_PAGINATION_CLASS" : "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE" : 10
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
 }
 
 SIMPLE_JWT = {
@@ -196,3 +206,26 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = MY_EMAIL_HOST_USER  # 서버에서 이메일을 보낼 때 사용하는 발신자 이메일
 EMAIL_HOST_PASSWORD = MY_EMAIL_HOST_PASSWORD  # 발신자 이메일의 비밀번호
+
+# Django-allauth 설정
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# 사이트 ID 설정
+SITE_ID = 1
+
+# 로그인 후 리다이렉트할 URL
+LOGIN_REDIRECT_URL = "http://127.0.0.1:3000/static/main.html/"
+
+# 네이버 소셜 로그인 설정
+SOCIALACCOUNT_PROVIDERS = {
+    "kakao": {
+        "APP": {
+            "client_id": "e3e7a5704901c255f1d3e5201d4796f6",
+            "secret": "ih8M3JAX23PkUH2WhyHORrko7Y2ogV4l",
+            "key": "",
+        }
+    }
+}
