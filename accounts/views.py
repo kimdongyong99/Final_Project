@@ -16,9 +16,6 @@ from django.core.validators import validate_email
 import requests
 from django.shortcuts import redirect
 import urllib.parse
-from allauth.socialaccount.models import SocialAccount
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 
 
 class SignupView(APIView):
@@ -180,4 +177,4 @@ class UserProfileView(APIView):
             )  # 성공 메시지 반환
 
         return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            serializer.errors, status=status.HTTP_400_BAD_REQUEST)
