@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import get_social_account_info
+
 
 urlpatterns = [
     path("signup/", views.SignupView.as_view()),
