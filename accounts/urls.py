@@ -13,6 +13,4 @@ urlpatterns = [
     ),
     path("verify-email/", views.VerifyEmailView.as_view(), name="verify-email"),
     path("<str:username>/", views.UserProfileView.as_view()),
-    path("social/", include("allauth.urls")),
-    path("social-account/", get_social_account_info),
 ]
