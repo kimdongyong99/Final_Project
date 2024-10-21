@@ -95,6 +95,9 @@ CORS_ORIGIN_WHITELIST = [
 ]
 # CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOWED_ORIGINS = [
+    'http://13.125.200.162',  # 프론트엔드 도메인
+]
 
 
 ROOT_URLCONF = "A_FIT_DAY.urls"
