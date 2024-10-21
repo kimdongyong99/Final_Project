@@ -188,4 +188,6 @@ class UserProfileView(APIView):
                 status=status.HTTP_200_OK,
             )  # 성공 메시지 반환
 
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
