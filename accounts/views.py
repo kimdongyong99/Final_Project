@@ -6,7 +6,7 @@ from .validators import validate_signup
 from .serializers import UserSerializer, UserProfileSerializer
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.exceptions import TokenError
 from .utils import generate_verification_code, send_verification_email
 from rest_framework import status
@@ -19,6 +19,7 @@ import urllib.parse
 
 
 class SignupView(APIView):
+
     def post(self, request):
         # 유효성 검사
         is_valid, err_msg = validate_signup(request.data)
@@ -72,6 +73,7 @@ class SignupView(APIView):
 
 
 class LoginView(APIView):
+
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
@@ -105,6 +107,7 @@ class LogoutView(APIView):
 
 
 class RequestEmailVerificationView(APIView):
+
     def post(self, request):
         email = request.data.get("email")
 
@@ -124,6 +127,7 @@ class RequestEmailVerificationView(APIView):
 
 
 class VerifyEmailView(APIView):
+
     def post(self, request):
         email = request.data.get("email")
         code = request.data.get("code")
@@ -153,28 +157,37 @@ class UserProfileView(APIView):
             user = get_object_or_404(User, username=username)
             serializer = UserProfileSerializer(user)
             return Response(serializer.data)  # 직렬화된 데이터 반환
-        return Response({"error": "본인 외에는 프로필을 조회할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+        return Response(
+            {"error": "본인 외에는 프로필을 조회할 수 없습니다."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
 
     # 프로필 수정
     def put(self, request, username):
         user = get_object_or_404(User, username=username)
-        
+
         # 현재 사용자와 요청한 사용자가 동일한지 확인
         if user != request.user:
-            return Response({"error": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)  # 권한 없음 응답
+            return Response(
+                {"error": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN
+            )  # 권한 없음 응답
 
         # 아이디와 이메일은 변경할 수 없도록 요청 데이터에서 제거
         data = request.data
-        
+
         # 나머지 필드를 업데이트 (예: 비밀번호, 주소, 프로필 이미지 등)
-        serializer = UserProfileSerializer(user, data=data, partial=True)  # partial=True는 부분 업데이트 허용
+        serializer = UserProfileSerializer(
+            user, data=data, partial=True
+        )  # partial=True는 부분 업데이트 허용
         if serializer.is_valid():  # 유효성 검사
             serializer.save()  # 시리얼라이저를 통해 프로필 정보 저장
             user.set_password(data.get("password"))
             user.save()
             return Response(
-                {"message": "프로필이 성공적으로 업데이트되었습니다."}, status=status.HTTP_200_OK
+                {"message": "프로필이 성공적으로 업데이트되었습니다."},
+                status=status.HTTP_200_OK,
             )  # 성공 메시지 반환
 
-        return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

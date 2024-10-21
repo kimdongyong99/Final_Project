@@ -71,7 +71,7 @@ INSTALLED_APPS = [
     "posts",
     "chatgpt",
     "payment",
-    
+
 ]
 
 MIDDLEWARE = [
@@ -83,7 +83,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    
+
 ]
 
 CORS_ORIGIN_WHITELIST = [
@@ -199,5 +199,3 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = MY_EMAIL_HOST_USER  # 서버에서 이메일을 보낼 때 사용하는 발신자 이메일
 EMAIL_HOST_PASSWORD = MY_EMAIL_HOST_PASSWORD  # 발신자 이메일의 비밀번호
 
-
-  
