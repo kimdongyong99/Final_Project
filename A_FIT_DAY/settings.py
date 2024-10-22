@@ -97,6 +97,7 @@ CORS_ORIGIN_WHITELIST = [
 
 CORS_ALLOWED_ORIGINS = [
     'http://13.125.200.162',  # 프론트엔드 도메인
+    'http://127.0.0.1:3000',
 ]
 
 
