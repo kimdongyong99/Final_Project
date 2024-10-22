@@ -45,7 +45,7 @@ IAMPORT = {
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "3.38.95.210",
+    "3.34.91.228",
     "localhost",
     "127.0.0.1",
 ]
