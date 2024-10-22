@@ -98,7 +98,8 @@ CORS_ORIGIN_WHITELIST = [
 # CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
-    'http://13.125.200.162',
+    'http://13.125.200.162',  # 프론트엔드 도메인
+    'http://127.0.0.1:3000',
     'https://afitday.shop',
     'https://afitday.site',
 
