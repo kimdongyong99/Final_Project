@@ -41,6 +41,7 @@ AI 기반의 맞춤형 식단 및 운동 계획을 제공하는 다이어트 관
 | HTTP Server | Gunicorn |
 | Reverse Proxy | Nginx |
 
+
 # 💭기술적 의사결정
 
 - **Django REST Framework**
@@ -176,6 +177,4 @@ Nginx는 비동기 처리 방식으로 높은 성능과 낮은 리소스 사용�
 # 📃 디자인
 <img width="979" alt="스크린샷 2024-10-23 오후 5 08 01" src="https://github.com/user-attachments/assets/e7a17ae3-7b82-4c84-930d-aa53e01a4a23">
 
-
-# ❗️트러블 슈팅
 
