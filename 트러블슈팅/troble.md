@@ -10,7 +10,8 @@
     
     - 원인 : formData.append() 메서드를 사용하여 프로필 이미지를 업데이트하는 과정에서, document.getElementById("profile_image").target.files[0] 코드의 target 속성이 잘못 사용되었습니다.
     
-    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/83c75a39-3aba-4ba4-a792-7aefe4b07895/e15247bf-7d2e-46c9-a4e2-2461ad1b10b4/image.png)
+![troble1](https://github.com/user-attachments/assets/569c8e79-f35f-4e00-9019-0322aee0f859)
+
     
     - target 을 사용한 이유: 파일 입력 요소에 대한 접근을 시도하면서 이벤트 객체를 고려해 파일 입력 요소에 대한 접근을 시도하려 했습니다.
     - 여기서는 단순히 DOM 요소에서 파일을 참조하는 것이므로, target을 사용할 필요가 없었습니다.
@@ -65,7 +66,7 @@
             return article_inf
     ```
     
-    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/83c75a39-3aba-4ba4-a792-7aefe4b07895/72142cf2-8841-4012-857e-603287183f46/image.png)
+![troble2](https://github.com/user-attachments/assets/eed97575-277e-4a52-9b6e-19c60bbc799f)
     
     - 문제 해결
     최종적으로 **response.encoding = 'euc-kr'**로 문제 해결
@@ -128,15 +129,15 @@
     결과적으로는 새로고침 반영이 안되는 것이었음
     Ctrl + F5로 강력 새로고침을 통해 잘 반영되는 것을 확인할 수 있었음
     
-    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/83c75a39-3aba-4ba4-a792-7aefe4b07895/72a37088-1391-47bf-a5e1-80b6f9f3aead/image.png)
+![troble3](https://github.com/user-attachments/assets/23b86e16-e69b-4ad2-ba7f-f9fb602091b4)
     
 - 댓글 CRUD 구현중 pk 값 설정 오류로 인한 에러
     
     작성자 : 김동용 
     
-    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/83c75a39-3aba-4ba4-a792-7aefe4b07895/3e25f693-ebdc-473f-9b5b-a3652b0c5e04/image.png)
-    
-    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/83c75a39-3aba-4ba4-a792-7aefe4b07895/61a071b7-f0e1-44e5-bb76-e2b3b40716ec/image.png)
+![troble4-1](https://github.com/user-attachments/assets/06e5941b-9eff-4976-9427-ee46041754ca)
+
+![troble4-2](https://github.com/user-attachments/assets/d0a153ce-ba6c-4a55-bc0c-3bff86215b8c)
     
     posts의 views.py에서 lookup_field 의 pk값 설정이 url.py에서 사용되는 경로에 지정된 pk값과 일치 하지 않아서 발생한 에러이다.
     
@@ -146,7 +147,7 @@
     
     작성자 : 김동용
     
-    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/83c75a39-3aba-4ba4-a792-7aefe4b07895/c14b3412-54c5-4e3f-b9a2-8a78b67328f2/image.png)
+![troble5](https://github.com/user-attachments/assets/b291040d-99d9-4ef9-98df-65eda937b15e)
     
     gunicorn.sevice 설정을 잘못해서 삭제를 하고 다시 만들어서 실행을 했는데 오류가 발생했다.
     
@@ -162,7 +163,7 @@
     
     작성자 : 김동용
     
-    ![스크린샷(134).png](https://prod-files-secure.s3.us-west-2.amazonaws.com/83c75a39-3aba-4ba4-a792-7aefe4b07895/b904f8cb-bcbf-44e0-a4b3-5d375a440213/%EC%8A%A4%ED%81%AC%EB%A6%B0%EC%83%B7(134).png)
+![troble6](https://github.com/user-attachments/assets/16cba0e0-36c4-4db2-a60c-8c0c47373067)
     
     ```python
     WARNING: The directory '/home/ubuntu/Final_Project_Front/static' in the STATICFILES_DIRS setting does not exist
