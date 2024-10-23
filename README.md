@@ -103,7 +103,7 @@ AI 기반의 맞춤형 식단 및 운동 계획을 제공하는 다이어트 관
 -   
 
 # 🏗️서비스 아키텍처
-
+![핏한하루 SA](https://github.com/user-attachments/assets/5255d356-9807-45b6-810f-18af8b5439eb)
 
 # 📃 ERD Diagram
 ![image](https://github.com/user-attachments/assets/bd8106f2-eeb4-4802-8846-853dc68824ac)
