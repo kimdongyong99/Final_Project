@@ -36,7 +36,10 @@ AI 기반의 맞춤형 식단 및 운동 계획을 제공하는 다이어트 관
 | Backend | Python, Django |
 | Frontend | HTML, CSS, Bootstrap, JS |
 | Database | Django ORM, SQLite |
-| Open AI| GPT4.0 mini |
+| Open AI | GPT4.0 mini |
+| Server Hosting | AWS EC2 |
+| HTTP Server | Gunicorn |
+| Reverse Proxy | Nginx |
 
 # 🧑‍🧑‍🧒‍🧒 개발팀
 
