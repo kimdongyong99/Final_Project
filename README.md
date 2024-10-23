@@ -102,6 +102,8 @@ AI 기반의 맞춤형 식단 및 운동 계획을 제공하는 다이어트 관
 ## 5. Payment service
 -   
 
+# 🏗️서비스 아키텍처
+
 
 # 📃 ERD Diagram
 ![image](https://github.com/user-attachments/assets/bd8106f2-eeb4-4802-8846-853dc68824ac)
