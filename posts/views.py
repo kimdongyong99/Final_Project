@@ -27,6 +27,7 @@ from .serializers import (
     CommentListSerializer,
     CommentCreateSerializer,
 )
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class PostListView(ListAPIView):
@@ -120,7 +121,8 @@ class PostHashtagView(ListCreateAPIView):
 
 
 class PostDetailView(APIView):
-    # permission_classes = [IsAuthenticatedOrReadOnly]
+    parser_classes = [MultiPartParser, FormParser]  # 멀티파트와 폼 데이터를 처리하기 위한 파서 추가
+
     # 글 상세
     def get(self, request, post_pk):
         products = get_object_or_404(Post, pk=post_pk)
@@ -130,11 +132,12 @@ class PostDetailView(APIView):
     # 글 수정
     def put(self, request, post_pk):
         products = get_object_or_404(Post, pk=post_pk)
-        # 예외 처리
-        if products.author != request.user:  # 예외처리 / 작성자 본인이 아닌 상태
+        
+        # 작성자 확인
+        if products.author != request.user:
             return Response(
-                data={"detail": "본인의 작성글만 수정할 수 있습니다."},
-                status=status.HTTP_403_FORBIDDEN,  # 본인의 글이 아니므로 금지된 접근 처리
+                {"detail": "본인의 작성글만 수정할 수 있습니다."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # 해시태그 데이터 처리
@@ -148,40 +151,37 @@ class PostDetailView(APIView):
             # 기존 해시태그 삭제
             post.hashtags.clear()
 
-        # 해시태그 처리
-        if hashtags_data:
-            # hashtags_data가 리스트인지 문자열인지 확인
-            if isinstance(hashtags_data, str):
-                hashtag_names = hashtags_data.split(",")  # 문자열인 경우 쉼표로 구분하여 리스트 생성
-            elif isinstance(hashtags_data, list):
-                hashtag_names = hashtags_data  # 리스트인 경우 그대로 사용
-            else:
-                hashtag_names = []
+            # 해시태그 처리
+            if hashtags_data:
+                # 해시태그가 리스트 또는 문자열일 경우 처리
+                if isinstance(hashtags_data, str):
+                    hashtag_names = hashtags_data.split(",")
+                elif isinstance(hashtags_data, list):
+                    hashtag_names = hashtags_data
+                else:
+                    hashtag_names = []
 
-            for hashtag_name in hashtag_names:
-                hashtag_name = hashtag_name.strip()  # 공백 제거
-                if hashtag_name:  # 빈 문자열 체크
-                    # 해시태그 앞에 #이 없으면 추가
-                    if not hashtag_name.startswith("#"):
-                        hashtag_name = f"#{hashtag_name}"
-                    hashtag, created = Hashtag.objects.get_or_create(
-                        hashtag=hashtag_name
-                    )  # 해시태그 생성 또는 조회
-                    post.hashtags.add(hashtag)
+                for hashtag_name in hashtag_names:
+                    hashtag_name = hashtag_name.strip()  # 공백 제거
+                    if hashtag_name:
+                        # 해시태그 앞에 #이 없으면 추가
+                        if not hashtag_name.startswith("#"):
+                            hashtag_name = f"#{hashtag_name}"
+                        hashtag, created = Hashtag.objects.get_or_create(
+                            hashtag=hashtag_name
+                        )
+                        post.hashtags.add(hashtag)
 
-        serializer = PostDetailSerializer(products, data=request.data, partial=True)
-        if serializer.is_valid():
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # 글 삭제
     def delete(self, request, post_pk):
         products = get_object_or_404(Post, pk=post_pk)
-        # 다른 사람이 삭제하면 안되니까 예외처리
         if products.author != request.user:
             return Response(
-                data={"detail": "본인의 게시글만 삭제할 수 있습니다."},
-                status=status.HTTP_403_FORBIDDEN,  # 다른 사람이 삭제 시도 시 금지된 접근 처리
+                {"detail": "본인의 게시글만 삭제할 수 있습니다."},
+                status=status.HTTP_403_FORBIDDEN,
             )
         products.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
