@@ -111,3 +111,6 @@ AI 기반의 맞춤형 식단 및 운동 계획을 제공하는 다이어트 관
 
 # 📃 architecture
 ![image](https://github.com/user-attachments/assets/c1fb952a-5268-451c-8ea6-e856d19567a5)
+
+# 📃 디자인
+<img width="979" alt="스크린샷 2024-10-23 오후 5 08 01" src="https://github.com/user-attachments/assets/e7a17ae3-7b82-4c84-930d-aa53e01a4a23">
