@@ -1,4 +1,3 @@
-# views.py
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from .models import Product, Payment
 from .serializers import ProductSerializer
@@ -11,7 +10,7 @@ class ProductListView(ListAPIView):
     serializer_class = ProductSerializer
     pagination_class = None
 
-# views.py
+
 class ProductDetailView(RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer

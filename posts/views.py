@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
-)  # 아직 settings에서 권한설정 안함
+)
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.pagination import PageNumberPagination

@@ -28,9 +28,3 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['profile_image', "username", "email","address","detail_address", "liked_articles", "post", "like_post"]  # 반환 및 수정할 필드 목록
-    # def save(self, **kwargs):
-    #     password = self.validated_data['password']
-    #     user = self.context['request'].user
-    #     user.set_password(password)
-    #     user.save()
-    #     return user
