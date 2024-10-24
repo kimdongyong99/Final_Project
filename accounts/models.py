@@ -3,8 +3,6 @@ from django.contrib.auth.models import AbstractUser
 from datetime import timedelta
 from django.utils import timezone
 
-# Create your models here.
-
 
 class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
